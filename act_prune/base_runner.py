@@ -15,8 +15,8 @@ class BaseRunner(ABC):
     
     def load_model_tokenizer(self):
         path_to_model = self.config["model"]["path"]
-        seq_len = self.config["model"]["seq_len"]
-        self.model, self.tokenizer = get_model(path_to_model, seq_len)
+        seqlen = self.config["model"]["seqlen"]
+        self.model, self.tokenizer = get_model(path_to_model, seqlen)
 
     def load_data(self):
         """Load dataset for pruning and validation """
@@ -24,7 +24,7 @@ class BaseRunner(ABC):
         dataset_name = self.config["dataset"]["name"]
         if dataset_name == "wikitext2":
             trainloader, testenc = get_wikitext2(
-                seqlen=self.model.seq_len,
+                seqlen=self.model.seqlen,
                 tokenizer=self.tokenizer
             )
 
@@ -34,8 +34,14 @@ class BaseRunner(ABC):
         """Insert into model modified mlp blocks with original weights """
         raise NotImplementedError
     
-    def measure_ppl(self, testenc, bs=1, device=None):
+    @torch.no_grad()
+    def measure_ppl(self, testenc, bs=1):
         """Measure quality of sparsified model"""
+
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+
+        device = self.model.device
 
         # Get input IDs
         testenc = testenc.input_ids
@@ -48,6 +54,7 @@ class BaseRunner(ABC):
         print(f"nsamples {nsamples}")
 
         # Loop through each batch
+        start.record()
         for i in range(0,nsamples,bs):
             if i % 50 == 0:
                 print(f"sample {i}")
@@ -78,11 +85,12 @@ class BaseRunner(ABC):
 
         # Compute perplexity
         ppl = torch.exp(torch.stack(nlls).sum() / (nsamples * self.model.seqlen))
-
+        end.record()
         # Empty CUDA cache to save memory
+        torch.cuda.synchronize()
         torch.cuda.empty_cache()
 
-        return ppl.item()
+        return ppl.item(), start.elapsed_time(end) / 1000
     
     def setup_environment(self):
         os.environ["CUDA_DEVICE_ORDER"] = self.config["env"]["CUDA_DEVICE_ORDER"]

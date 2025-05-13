@@ -1,7 +1,7 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, set_seed
 
-def get_model(model_path, seq_len):
+def get_model(model_path, seqlen):
 
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
@@ -9,7 +9,7 @@ def get_model(model_path, seq_len):
         torch_dtype='auto',
         device_map = 'cuda:0'
     )
-    model.seq_len = seq_len
+    model.seqlen = seqlen
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
 
