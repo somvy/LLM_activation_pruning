@@ -19,4 +19,5 @@ dataset:
   name: wikitext2
 
 pruning:
-  backend: null #cutlass cusparselt
+  module: layers  #layers blocks
+  backend: 2:4_magnitude_pruning #cutlass cusparselt 2:4_magnitude_pruning

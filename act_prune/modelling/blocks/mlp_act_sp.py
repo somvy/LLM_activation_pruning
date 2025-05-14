@@ -40,7 +40,7 @@ class MLP_act_sp(nn.Module):
             pruned_x = SparseSemiStructuredTensorCUTLASS.prune_dense_static_sort(x_flat)
             out_gate_proj = self.gate_proj(x_flat).view(bs, seq_len, -1)
             out_up_proj = self.up_proj(pruned_x).view(bs, seq_len, -1)
-            down_proj = self.down_proj(self.act_fn(out_gate_proj) * out_up_proj)  
+            down_proj = self.down_proj(self.act_fn(out_gate_proj) * out_up_proj)
 
         return down_proj
     
