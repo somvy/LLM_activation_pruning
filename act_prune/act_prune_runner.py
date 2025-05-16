@@ -15,15 +15,17 @@ class ActPruneRunner(BaseRunner):
         super().__init__(config)
         # self.log_dir = (Path(config["paths"]["log_dir"]) / self.model_save_name / self.dataset_name)
 
-    def replace_linaer_layers(self, backend=None):
+    def replace_linaer_layers(self):
         """Insert into model modified linear layers with original weights """
-
         logging.info("Replace Linear layers...")
         # architectures = self.model.config["architectures"]
         architectures = self.model.config.architectures
         orig_mlp_block = self.model.model.layers[0].mlp
         root_module = self.model.model
         module_name_dict = {name: module for name, module in root_module.named_modules()}
+
+        backend = self.config["pruning"]["backend"]
+        target_layers = self.config["pruning"]["target_modules"]
         for name, module in module_name_dict.items():
             if isinstance(module, torch.nn.Linear):
                 ind = name.rfind(".")
@@ -32,15 +34,15 @@ class ActPruneRunner(BaseRunner):
                 else:
                     father = module_name_dict[name[:ind]]
                 
-                sparse_linear = Linear_act_sp.from_original(module, backend=backend)
-                breakpoint()
-                setattr(father, name[ind + 1 :], sparse_linear)
-                logging.info(name)
+                if name[(ind+1):] in target_layers:                
+                    sparse_linear = Linear_act_sp.from_original(module, backend=backend)
+                    setattr(father, name[ind + 1 :], sparse_linear)
+                    logging.info(name)
 
         logging.info("Modified model...")
         logging.info(self.model)        
 
-    def replace_mlp_blocks(self, backend=None):
+    def replace_mlp_blocks(self):
         """Insert into model modified mlp blocks with original weights """
 
         logging.info("Replace MLP blocks...")
@@ -48,6 +50,9 @@ class ActPruneRunner(BaseRunner):
         architectures = self.model.config.architectures
         orig_mlp_block = self.model.model.layers[0].mlp
         root_module = self.model.model
+
+        backend = self.config["pruning"]["backend"]
+        target_layers = self.config["pruning"]["target_modules"]
         module_name_dict = {name: module for name, module in root_module.named_modules()}
         for name, module in module_name_dict.items():
             # if isinstance(module, Qwen3MLP):
@@ -74,13 +79,12 @@ class ActPruneRunner(BaseRunner):
         # self.log_dir = (Path(config["paths"]["log_dir"]) / self.model_save_name / self.dataset_name)
         backend = self.config["pruning"]["backend"]
         if self.config["pruning"]["module"] == "layers":
-            self.replace_linaer_layers(backend=backend)
+            self.replace_linaer_layers()
         elif self.config["pruning"]["module"] == "blocks":
-            self.replace_mlp_blocks(backend=backend)
-        breakpoint()
+            self.replace_mlp_blocks()
+
         _, testloader = self.load_data()
 
         # Evaluate ppl in no grad context to avoid updating the model
         ppl, time = self.measure_ppl(testloader)
-        
         logging.info(f'{self.config["dataset"]["name"]}: {ppl}, computation time: {time}')
