@@ -7,7 +7,8 @@ def get_model(model_path, seqlen):
         model_path,
         trust_remote_code = True,
         torch_dtype='auto',
-        device_map = 'cuda:0'
+        device_map = 'cuda:0',
+        # attn_implementation = 'eager'
     )
     model.seqlen = seqlen
 

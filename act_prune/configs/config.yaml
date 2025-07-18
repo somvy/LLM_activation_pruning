@@ -12,13 +12,14 @@ paths:
   results_dir: "artifacts/results/"
 
 model:
-  path: "/home/llm_compression/LLaMA/Llama-2-7b-hf"
+  # path: "/home/LLM/weights/Meta-Llama-3.1-8B"
+  path: "/home/LLM/weights/Llama-2-7b-hf"
   seqlen: 2048
 
 dataset:
   name: wikitext2
 
 pruning:
-  module: layers  #layers blocks
-  target_modules: ["up_proj"] #["gate_proj", "up_proj", "down_proj"]
-  backend: 2:4_magnitude_scale #cutlass cusparselt 2:4_magnitude_shift
+  module: layers  #layers mlp_blocks attn_blocks
+  target_modules: ["q_proj", "k_proj", "gate_proj", "down_proj"] #["gate_proj", "up_proj", "down_proj"]  "v_proj", "o_proj", "gate_proj", "down_proj"
+  backend: 8:16_variance_correction #cutlass cusparselt 2:4_magnitude_shift 2:4_magnitude_scale 2:4_magnitude_hadamard 2:4_weight_metric_correction

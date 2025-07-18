@@ -9,6 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 artificats/
+fast-hadamard-transform
 build/
 develop-eggs/
 dist/
