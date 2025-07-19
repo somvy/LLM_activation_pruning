@@ -15,7 +15,7 @@ class LlamaAttention_act_sp(LlamaAttention):
         return attn_output, attn_weights
     
     @classmethod
-    def from_original(cls, orig_SelfAttn, backend=None):
+    def from_original(cls, orig_SelfAttn, sparsity_type=None):
         sp_SelfAttn = cls(orig_SelfAttn.config, orig_SelfAttn.layer_idx)
         sp_SelfAttn.q_proj = orig_SelfAttn.q_proj
         sp_SelfAttn.k_proj = orig_SelfAttn.k_proj

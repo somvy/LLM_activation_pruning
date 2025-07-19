@@ -7,6 +7,9 @@ from typing import Tuple
 from utils.modelutils import get_model
 from utils.datautils import get_wikitext2
 
+import lm_eval
+os.environ["HF_ALLOW_CODE_EVAL"] = "1"
+
 class BaseRunner(ABC):
     def __init__(self, config):
         self.config = config
@@ -18,10 +21,8 @@ class BaseRunner(ABC):
         seqlen = self.config["model"]["seqlen"]
         self.model, self.tokenizer = get_model(path_to_model, seqlen)
 
-    def load_data(self):
+    def load_data(self, dataset_name):
         """Load dataset for pruning and validation """
-
-        dataset_name = self.config["dataset"]["name"]
         if dataset_name == "wikitext2":
             trainloader, testenc = get_wikitext2(
                 seqlen=self.model.seqlen,
@@ -92,6 +93,20 @@ class BaseRunner(ABC):
 
         return ppl.item(), start.elapsed_time(end) / 1000
     
+    def run_lm_eval(self):
+        config = self.config["benchmarks"]["harness"]
+        model = lm_eval.models.huggingface.HFLM(pretrained=self.model)
+        results = lm_eval.simple_evaluate(
+            model=model,
+            tasks=config["tasks"],  # Replace with desired task(s)
+            num_fewshot=config["num_fewshot"],
+            batch_size=config["batch_size"],
+            apply_chat_template=config["apply_chat_template"],
+            confirm_run_unsafe_code=True,
+            device="cuda:0"
+        )
+        return results["results"]
+
     def setup_environment(self):
         os.environ["CUDA_DEVICE_ORDER"] = self.config["env"]["CUDA_DEVICE_ORDER"]
         os.environ["OMP_NUM_THREADS"] = self.config["env"]["OMP_NUM_THREADS"]

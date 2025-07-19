@@ -8,13 +8,13 @@ from torch.sparse import (
 from transformers.activations import ACT2FN
 
 class MLP_act_sp(nn.Module):
-    def __init__(self, config, backend=None):
+    def __init__(self, config, sparsity_type=None):
         super().__init__()
         if hasattr(config, "mlp_bias"):
             bias = config.mlp_bias
         else:
             bias = False
-        self.backend = backend
+        self.sparsity_type = sparsity_type
 
         self.config = config
         self.hidden_size = config.hidden_size
@@ -25,16 +25,16 @@ class MLP_act_sp(nn.Module):
         self.act_fn = ACT2FN[config.hidden_act]
 
     def forward(self, x):
-        if self.backend is None:
+        if self.sparsity_type is None:
             down_proj = self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
         
-        elif self.backend == "cusparselt":
+        elif self.sparsity_type == "cusparselt":
             bs, seq_len, _ = x.shape
             x_flat = x.view(-1, self.hidden_size)
             pruned_x = SparseSemiStructuredTensorCUSPARSELT.prune_dense_static_sort(x_flat)
             down_proj = self.down_proj(self.act_fn(self.gate_proj(pruned_x)) * self.up_proj(pruned_x))
         
-        elif self.backend == "cutlass":
+        elif self.sparsity_type == "cutlass":
             bs, seq_len, _ = x.shape
             x_flat = x.view(-1, self.hidden_size)
             pruned_x = SparseSemiStructuredTensorCUTLASS.prune_dense_static_sort(x_flat)
@@ -45,8 +45,8 @@ class MLP_act_sp(nn.Module):
         return down_proj
     
     @classmethod
-    def from_original(cls, orig_MLP, backend=None):
-        mlp_sp = cls(orig_MLP.config, backend)
+    def from_original(cls, orig_MLP, sparsity_type=None):
+        mlp_sp = cls(orig_MLP.config, sparsity_type)
         mlp_sp.gate_proj = orig_MLP.gate_proj
         mlp_sp.up_proj = orig_MLP.up_proj
         mlp_sp.down_proj = orig_MLP.down_proj

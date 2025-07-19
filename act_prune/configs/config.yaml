@@ -12,14 +12,24 @@ paths:
   results_dir: "artifacts/results/"
 
 model:
-  # path: "/home/LLM/weights/Meta-Llama-3.1-8B"
   path: "/home/LLM/weights/Llama-2-7b-hf"
   seqlen: 2048
 
-dataset:
-  name: wikitext2
+benchmarks:
+  ppl_wikitext2:
+    run_ppl: True
+  
+  harness:
+    run_lm_eval: True
+    tasks: ["boolq"]
+    num_fewshot: 0
+    batch_size: 1024
+    apply_chat_template: False # for instructive models run with True and False
 
 pruning:
+  sparsity_type: semi-structured_act_magnitude #semi-structured_act_magnitude
+  # sparisity_ratio: null #for unstructured pruning
+  prune_n: 2
+  prune_m: 4
   module: layers  #layers mlp_blocks attn_blocks
-  target_modules: ["q_proj", "k_proj", "gate_proj", "down_proj"] #["gate_proj", "up_proj", "down_proj"]  "v_proj", "o_proj", "gate_proj", "down_proj"
-  backend: 8:16_variance_correction #cutlass cusparselt 2:4_magnitude_shift 2:4_magnitude_scale 2:4_magnitude_hadamard 2:4_weight_metric_correction
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]

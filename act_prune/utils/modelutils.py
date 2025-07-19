@@ -1,5 +1,7 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, set_seed
+import os
+
 
 def get_model(model_path, seqlen):
 

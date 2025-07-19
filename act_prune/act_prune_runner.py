@@ -17,16 +17,19 @@ class ActPruneRunner(BaseRunner):
         super().__init__(config)
         # self.log_dir = (Path(config["paths"]["log_dir"]) / self.model_save_name / self.dataset_name)
 
-    def replace_linaer_layers(self):
+    def replace_linear_layers(self):
         """Insert into model modified linear layers with original weights """
         logging.info("Replace Linear layers...")
         # architectures = self.model.config["architectures"]
         architectures = self.model.config.architectures
-        orig_mlp_block = self.model.model.layers[0].mlp
+
         root_module = self.model.model
         module_name_dict = {name: module for name, module in root_module.named_modules()}
 
-        backend = self.config["pruning"]["backend"]
+        sparsity_type = self.config["pruning"]["sparsity_type"]
+        sparsity_ratio = self.config["pruning"].get("sparsity_ratio", None)
+        prune_n = self.config["pruning"].get("prune_n", None)
+        prune_m = self.config["pruning"].get("prune_m", None)
         target_layers = self.config["pruning"]["target_modules"]
         for name, module in module_name_dict.items():
             if isinstance(module, torch.nn.Linear):
@@ -36,8 +39,15 @@ class ActPruneRunner(BaseRunner):
                 else:
                     father = module_name_dict[name[:ind]]
                 
-                if name[(ind+1):] in target_layers:              
-                    sparse_linear = Linear_act_sp.from_original(module, backend=backend, name=name[(ind+1):])
+                if name[(ind+1):] in target_layers:            
+                    sparse_linear = Linear_act_sp.from_original(
+                        module, 
+                        sparsity_type=sparsity_type,
+                        sparsity_ratio=sparsity_ratio,
+                        prune_n=prune_n,
+                        prune_m=prune_m,  
+                        name=name[(ind+1):]
+                    )
                     setattr(father, name[ind + 1 :], sparse_linear)
                     logging.info(name)
 
@@ -53,13 +63,10 @@ class ActPruneRunner(BaseRunner):
         orig_mlp_block = self.model.model.layers[0].mlp
         root_module = self.model.model
 
-        backend = self.config["pruning"]["backend"]
+        sparsity_type = self.config["pruning"]["sparsity_type"]
         target_layers = self.config["pruning"]["target_modules"]
         module_name_dict = {name: module for name, module in root_module.named_modules()}
         for name, module in module_name_dict.items():
-            # if isinstance(module, Qwen3MLP):
-            # if isinstance(module, LlamaMLP):
-            # if isinstance(module, torch.nn.Linear) and (name.find("down_proj") != -1):
             if isinstance(module, type(orig_mlp_block)):
                 ind = name.rfind(".")
                 if ind == -1:
@@ -67,7 +74,7 @@ class ActPruneRunner(BaseRunner):
                 else:
                     father = module_name_dict[name[:ind]]
                 
-                sparse_mlp = MLP_act_sp.from_original(module, backend=backend)
+                sparse_mlp = MLP_act_sp.from_original(module, sparsity_type=sparsity_type)
                 setattr(father, name[ind + 1 :], sparse_mlp)
                 logging.info(name)
 
@@ -83,13 +90,10 @@ class ActPruneRunner(BaseRunner):
         orig_self_attn_block = self.model.model.layers[0].self_attn
         root_module = self.model.model
 
-        backend = self.config["pruning"]["backend"]
+        sparsity_type = self.config["pruning"]["sparsity_type"]
         target_layers = self.config["pruning"]["target_modules"]
         module_name_dict = {name: module for name, module in root_module.named_modules()}
         for name, module in module_name_dict.items():
-            # if isinstance(module, Qwen3MLP):
-            # if isinstance(module, LlamaMLP):
-            # if isinstance(module, torch.nn.Linear) and (name.find("down_proj") != -1):
             if isinstance(module, type(orig_self_attn_block)):
                 ind = name.rfind(".")
                 if ind == -1:
@@ -97,7 +101,7 @@ class ActPruneRunner(BaseRunner):
                 else:
                     father = module_name_dict[name[:ind]]
 
-                sp_SelfAttn = LlamaAttention_act_sp.from_original(module, backend=backend)
+                sp_SelfAttn = LlamaAttention_act_sp.from_original(module, sparsity_type=sparsity_type)
                 setattr(father, name[ind + 1 :], sp_SelfAttn)
                 logging.info(name)
 
@@ -109,16 +113,22 @@ class ActPruneRunner(BaseRunner):
         self.load_model_tokenizer()
         # self.model.config._attn_implementation == 'eager'
         # self.log_dir = (Path(config["paths"]["log_dir"]) / self.model_save_name / self.dataset_name)
-        backend = self.config["pruning"]["backend"]
+        sparsity_type = self.config["pruning"]["sparsity_type"]
+
         if self.config["pruning"]["module"] == "layers":
-            self.replace_linaer_layers()
+            self.replace_linear_layers()
         elif self.config["pruning"]["module"] == "mlp_blocks":
             self.replace_mlp_blocks()
         elif self.config["pruning"]["module"] == "attn_blocks":
             self.replace_attn_blocks()
 
-        _, testloader = self.load_data()
-
-        # Evaluate ppl in no grad context to avoid updating the model
-        ppl, time = self.measure_ppl(testloader)
-        logging.info(f'{self.config["dataset"]["name"]}: {ppl}, computation time: {time}')
+        benchmarks = self.config["benchmarks"]
+        if benchmarks["ppl_wikitext2"]["run_ppl"]:
+            _, testloader = self.load_data("wikitext2")
+            # Evaluate ppl in no grad context to avoid updating the model
+            ppl, time = self.measure_ppl(testloader)
+            logging.info(f'wikitext2: {ppl}, computation time: {time}')
+        
+        if benchmarks["harness"]["run_lm_eval"]:
+            results = self.run_lm_eval()
+            logging.info(results)

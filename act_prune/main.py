@@ -27,13 +27,6 @@ def main() -> None:
     logging.info(f"Fixing seed: {config['env']['SEED']}")
     runner = ActPruneRunner(config)
 
-    # if config["mode"]["name"] in ["train", "optimize"]:
-    #     runner = TrainRunner(config)
-    # elif config["mode"]["name"] == "infer":
-    #     runner = InferRunner(config)
-    # else:
-    #     raise ValueError(f"Unsupported mode: {config['mode']}")
-
     runner.run()
 
 
