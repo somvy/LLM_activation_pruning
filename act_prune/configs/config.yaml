@@ -10,9 +10,9 @@ paths:
   checkpoint_dir: "artifacts/checkpoints/"
   results_dir: "artifacts/results/"
 model:
-  # path: NousResearch/Llama-2-7b-hf
+  # path: NousResearch/Llama-2-7b-chat-hf
   # path: Qwen/Qwen2.5-7B-Instruct
-  path: NousResearch/Llama-2-7b-hf
+  path: google/gemma-3-4b-it
   seqlen: 2048
 benchmarks:
   ppl_wikitext2:
@@ -28,7 +28,7 @@ pruning:
   # sparsity_type: semi-structured_act_magnitude #semi-structured_act_magnitude
   sparsity_type: semi-structured_act_magnitude
   # sparisity_ratio: null #for unstructured pruning
-  prune_n: 2
-  prune_m: 4
+  prune_n: 8
+  prune_m: 16
   module: layers #layers mlp_blocks attn_blocks
   target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]

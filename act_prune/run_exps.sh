@@ -3,7 +3,7 @@
 echo `which python`
 
 models=(
-    "NousResearch/Llama-2-7b-hf"
+    "NousResearch/Llama-2-7b-chat-hf"
     "Qwen/Qwen2.5-7B-Instruct"
     "google/gemma-3-4b-it"
 )
