@@ -2,7 +2,6 @@ env:
   SEED: 42
   CUDA_DEVICE_ORDER: "PCI_BUS_ID"
   OMP_NUM_THREADS: "4"
-  CUDA_VISIBLE_DEVICES: "1"
   # TRANSFORMERS_CACHE: /home/data/hf_cache/
 paths:
   data_dir: "data/"
@@ -10,9 +9,9 @@ paths:
   checkpoint_dir: "artifacts/checkpoints/"
   results_dir: "artifacts/results/"
 model:
-  # path: NousResearch/Llama-2-7b-chat-hf
+  path: "google/gemma-3-4b-it"
   # path: Qwen/Qwen2.5-7B-Instruct
-  path: google/gemma-3-4b-it
+  # path: google/gemma-3-4b-it
   seqlen: 2048
 benchmarks:
   ppl_wikitext2:
@@ -26,7 +25,8 @@ benchmarks:
     apply_chat_template: True # for instructive models run with True and False
 pruning:
   # sparsity_type: semi-structured_act_magnitude #semi-structured_act_magnitude
-  sparsity_type: semi-structured_act_magnitude
+  sparsity_type: semi-structured_weight_magnitude
+  # sparsity_type: unstructured_weight_magnitude
   # sparisity_ratio: null #for unstructured pruning
   prune_n: 8
   prune_m: 16
