@@ -15,6 +15,7 @@ class Linear_act_sp(nn.Module):
         prune_n=None,  # if sparsity_type is "semi-structured_act_magnitude"
         prune_m=None,  # if sparsity_type is "semi-structured_act_magnitude"
         name=None,
+        additional_transformation=None,
     ):
         super().__init__()
         self.in_features = in_features
@@ -25,6 +26,7 @@ class Linear_act_sp(nn.Module):
         self.prune_m = prune_m
         self.register_buffer("weight", None)
         self.name = name
+        self.additional_transformation = additional_transformation
 
     def unstructured_magnitude_pruner(self, x, sparsity_ratio):
         orig_shape = x.shape
@@ -47,23 +49,32 @@ class Linear_act_sp(nn.Module):
         x_sp = x * mask
         return x_sp
 
+    def prune_with_additional_transformation(self, x, pruner):
+        if self.additional_transformation == "scaling":
+            max_act = torch.max(torch.abs(x), dim=0).values
+            max_weight = torch.max(torch.abs(self.weight), dim=0).values
+            s = torch.sqrt(max_act / max_weight.clamp(min=1e-8))
+            x_flat_sp = pruner(x / s)
+            scaled_weight = self.weight * s.unsqueeze(0)
+            return x_flat_sp @ scaled_weight.t()
+        return prunner(x) @ self.weight.t()
+
     def forward(self, x):
         bs, seq_len, _ = x.shape
         x_flat = x.view(-1, self.in_features)
 
         if self.sparsity_type is None:
-            out = x @ self.weight.t()
-        elif self.sparsity_type == "semi-structured_act_magnitude":
-            x_flat_sp = self.semi_structural_magnitude_pruner(
-                x_flat, prune_n=self.prune_n, prune_m=self.prune_m
-            )
-            out = x_flat_sp @ self.weight.t()
-        elif self.sparsity_type == "unstructured_act_magnitude":
-            x_flat_sp = self.unstructured_magnitude_pruner(
-                x_flat, sparsity_ratio=self.sparsity_ratio
-            )
-            out = x_flat_sp @ self.weight.t()
+            return (x @ self.weight.t()).view(bs, seq_len, -1)
 
+        if self.sparsity_type == "semi-structured_act_magnitude":
+            out = self.prune_with_additional_transformation(x_flat,
+                                                            lambda x_prepared: self.semi_structural_magnitude_pruner(x_prepared, prune_n=self.prune_n, prune_m=self.prune_m)
+                                                           )
+        elif self.sparsity_type == "unstructured_act_magnitude":
+            out = self.prune_with_additional_transformation(x_flat,
+                                                            lambda x_prepared: self.unstructured_magnitude_pruner(x_prepared, sparsity_ratio=self.sparsity_ratio)
+                                                            )
+        
         out = out.view(bs, seq_len, -1)
 
         return out
@@ -77,6 +88,7 @@ class Linear_act_sp(nn.Module):
         prune_n=None,
         prune_m=None,
         name=None,
+        additional_transformation=None,
     ):
         linear_sp = cls(
             orig_linear.in_features,
@@ -86,6 +98,7 @@ class Linear_act_sp(nn.Module):
             prune_n=prune_n,
             prune_m=prune_m,
             name=name,
+            additional_transformation=additional_transformation,
         )
         linear_sp.weight = orig_linear.weight
 
