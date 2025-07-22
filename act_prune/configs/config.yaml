@@ -1,35 +1,34 @@
 env:
   SEED: 42
-  CUDA_DEVICE_ORDER: "PCI_BUS_ID" 
+  CUDA_DEVICE_ORDER: "PCI_BUS_ID"
   OMP_NUM_THREADS: "4"
-  CUDA_VISIBLE_DEVICES: "0"
-  TRANSFORMERS_CACHE: /home/data/hf_cache/
-
+  CUDA_VISIBLE_DEVICES: "1"
+  # TRANSFORMERS_CACHE: /home/data/hf_cache/
 paths:
   data_dir: "data/"
   log_dir: "artifacts/logs/"
   checkpoint_dir: "artifacts/checkpoints/"
   results_dir: "artifacts/results/"
-
 model:
-  path: "/home/LLM/weights/Llama-2-7b-hf"
+  # path: NousResearch/Llama-2-7b-chat-hf
+  # path: Qwen/Qwen2.5-7B-Instruct
+  path: google/gemma-3-4b-it
   seqlen: 2048
-
 benchmarks:
   ppl_wikitext2:
     run_ppl: True
-  
+    batch_size: 8
   harness:
     run_lm_eval: True
-    tasks: ["boolq"]
+    tasks: ["boolq", "winogrande", "piqa", "arc_easy"]
     num_fewshot: 0
     batch_size: 1024
-    apply_chat_template: False # for instructive models run with True and False
-
+    apply_chat_template: True # for instructive models run with True and False
 pruning:
-  sparsity_type: semi-structured_act_magnitude #semi-structured_act_magnitude
+  # sparsity_type: semi-structured_act_magnitude #semi-structured_act_magnitude
+  sparsity_type: semi-structured_act_magnitude
   # sparisity_ratio: null #for unstructured pruning
-  prune_n: 2
-  prune_m: 4
-  module: layers  #layers mlp_blocks attn_blocks
+  prune_n: 8
+  prune_m: 16
+  module: layers #layers mlp_blocks attn_blocks
   target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
