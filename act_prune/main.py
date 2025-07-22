@@ -2,7 +2,6 @@ import os
 import logging
 import warnings
 import yaml
-import argparse
 from utils.basic import seed_everything, load_config
 from act_prune_runner import ActPruneRunner
 
