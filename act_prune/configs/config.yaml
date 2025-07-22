@@ -27,7 +27,7 @@ benchmarks:
 pruning:
   # sparsity_type: semi-structured_act_magnitude #semi-structured_act_magnitude
   sparsity_type: semi-structured_act_magnitude
-  # sparisity_ratio: null #for unstructured pruning
+  # sparsity_ratio: null # for unstructured pruning
   prune_n: 8
   prune_m: 16
   module: layers #layers mlp_blocks attn_blocks
