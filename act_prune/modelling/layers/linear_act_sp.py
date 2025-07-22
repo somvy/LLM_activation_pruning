@@ -54,6 +54,16 @@ class Linear_act_sp(nn.Module):
                 prune_n=self.prune_n, prune_m=self.prune_m)
             out = x_flat_sp @ self.weight.t()
 
+        elif self.sparsity_type == "semi-structured_shift":
+            eta = torch.mean(x_flat, dim=1, keepdim=True)  # eq (9)
+            x_shifted = x_flat - eta
+            x_sp = self.semi_structural_magnitude_pruner(
+                x_shifted, 
+                prune_n=self.prune_n, 
+                prune_m=self.prune_m
+            )
+            out = (x_sp + eta) @ self.weight.t() # eq (8)
+
         out = out.view(bs, seq_len, -1)
 
         return out
