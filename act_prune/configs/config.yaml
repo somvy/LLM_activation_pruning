@@ -1,34 +1,43 @@
 env:
-  SEED: 42
-  CUDA_DEVICE_ORDER: "PCI_BUS_ID"
-  OMP_NUM_THREADS: "4"
-  # TRANSFORMERS_CACHE: /home/data/hf_cache/
+    SEED: 42
+    CUDA_DEVICE_ORDER: "PCI_BUS_ID"
+    OMP_NUM_THREADS: "4"
+    # TRANSFORMERS_CACHE: /home/data/hf_cache/
 paths:
-  data_dir: "data/"
-  log_dir: "artifacts/logs/"
-  checkpoint_dir: "artifacts/checkpoints/"
-  results_dir: "artifacts/results/"
+    data_dir: "data/"
+    log_dir: "artifacts/logs/"
+    checkpoint_dir: "artifacts/checkpoints/"
+    results_dir: "artifacts/results/"
 model:
-  path: "google/gemma-3-4b-it"
-  # path: Qwen/Qwen2.5-7B-Instruct
-  # path: google/gemma-3-4b-it
-  seqlen: 2048
+    path: "google/gemma-3-4b-it"
+    # path: Qwen/Qwen2.5-7B-Instruct
+    # path: google/gemma-3-4b-it
+    seqlen: 2048
 benchmarks:
-  ppl_wikitext2:
-    run_ppl: True
-    batch_size: 8
-  harness:
-    run_lm_eval: True
-    tasks: ["boolq", "winogrande", "piqa", "arc_easy"]
-    num_fewshot: 0
-    batch_size: 1024
-    apply_chat_template: True # for instructive models run with True and False
+    ppl_wikitext2:
+        run_ppl: True
+        batch_size: 8
+    harness:
+        run_lm_eval: True
+        tasks: ["boolq", "winogrande", "piqa", "arc_easy"]
+        num_fewshot: 0
+        batch_size: 1024
+        apply_chat_template: True # for instructive models run with True and False
 pruning:
-  # sparsity_type: semi-structured_act_magnitude #semi-structured_act_magnitude
-  sparsity_type: semi-structured_weight_magnitude
-  # sparsity_type: unstructured_weight_magnitude
-  # sparisity_ratio: null #for unstructured pruning
-  prune_n: 8
-  prune_m: 16
-  module: layers #layers mlp_blocks attn_blocks
-  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+    # sparsity_type: semi-structured_act_magnitude #semi-structured_act_magnitude
+    sparsity_type: unstructured_act_magnitude
+    # sparsity_type: unstructured_weight_magnitude
+    sparsity_ratio: 0.2 # for unstructured pruning
+    prune_n: 8
+    prune_m: 16
+    module: layers #layers mlp_blocks attn_blocks
+    target_modules:
+        [
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ]
