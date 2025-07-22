@@ -1,13 +1,9 @@
 import logging
-import os
-import json
-import pickle
-import torch
-from pathlib import Path
 
+import torch
 from base_runner import BaseRunner
-from modelling.blocks.mlp_act_sp import MLP_act_sp
 from modelling.blocks.llama_attn import LlamaAttention_act_sp
+from modelling.blocks.mlp_act_sp import MLP_act_sp
 from modelling.layers.linear_act_sp import Linear_act_sp
 
 
@@ -49,7 +45,7 @@ class ActPruneRunner(BaseRunner):
         super().__init__(config)
 
     def replace_linear_layers(self):
-        """Insert into model modified linear layers with original weights """
+        """Insert into model modified linear layers with original weights"""
         logging.info("Replace Linear layers...")
         # architectures = self.model.config["architectures"]
         architectures = self.model.config.architectures
@@ -81,7 +77,7 @@ class ActPruneRunner(BaseRunner):
                         sparsity_ratio=sparsity_ratio,
                         prune_n=prune_n,
                         prune_m=prune_m,
-                        name=name[(ind+1):]
+                        name=name[(ind + 1) :],
                     )
                     if sparsity_type in ("semi-structured_act_magnitude","unstructured_act_magnitude"):
                         sparse_linear = Linear_act_sp.from_original(module, **kvargs)
@@ -99,7 +95,7 @@ class ActPruneRunner(BaseRunner):
         logging.info(f"Replaced {replaced_cnt} linear layers with sparse ones.")
 
     def replace_mlp_blocks(self):
-        """Insert into model modified mlp blocks with original weights """
+        """Insert into model modified mlp blocks with original weights"""
 
         logging.info("Replace MLP blocks...")
         # architectures = self.model.config["architectures"]
@@ -129,7 +125,7 @@ class ActPruneRunner(BaseRunner):
         logging.info(f"Replaced {replaced_cnt} MLP blocks with sparse ones.")
 
     def replace_attn_blocks(self):
-        """Insert into model modified self attn blocks with original weights """
+        """Insert into model modified self attn blocks with original weights"""
 
         logging.info("Replace SelfAttn blocks...")
         # architectures = self.model.config["architectures"]
@@ -149,7 +145,9 @@ class ActPruneRunner(BaseRunner):
                 else:
                     father = module_name_dict[name[:ind]]
 
-                sp_SelfAttn = LlamaAttention_act_sp.from_original(module, sparsity_type=sparsity_type)
+                sp_SelfAttn = LlamaAttention_act_sp.from_original(
+                    module, sparsity_type=sparsity_type
+                )
                 setattr(father, name[ind + 1 :], sp_SelfAttn)
                 replaced_cnt += 1
                 logging.info(name)
