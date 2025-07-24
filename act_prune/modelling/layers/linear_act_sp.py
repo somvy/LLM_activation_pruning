@@ -47,7 +47,7 @@ class Linear_act_sp(nn.Module):
         h is hidden dimension, l is sequence length.
         """
     
-        abs_x = torch.abs(x_flat) # |X_it|
+        abs_x = torch.abs(x) # |X_it|
         denominator = torch.sqrt(torch.sum(x ** 2, dim=1, keepdim=True))  # sqrt(sum_j X_ij^2)
         col_norms = torch.sqrt(torch.sum(x ** 2, dim=0, keepdim=True))  # sqrt(sum_p X_pt^2)
     
@@ -74,15 +74,18 @@ class Linear_act_sp(nn.Module):
             
             x_flat_sp = self.semi_structural_magnitude_pruner(
                 x_flat, 
-                prune_n=self.prune_n, prune_m=self.prune_m)
+                prune_n=self.prune_n, prune_m=self.prune_m
+            )
             out = x_flat_sp @ self.weight.t()
 
         elif self.sparsity_type == "semi_structural_L_pruner":
+            
             x_flat_sp = self.semi_structural_L_pruner(
                 x_flat,
                 prune_n=self.prune_n, 
                 prune_m=self.prune_m
             )
+            out = x_flat_sp @ self.weight.t()
 
         elif self.sparsity_type == "semi-structured_shift":
             eta = torch.mean(x_flat, dim=1, keepdim=True)  # eq (9)
