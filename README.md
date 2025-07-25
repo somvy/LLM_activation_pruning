@@ -19,7 +19,7 @@ LLM_activation_pruning/
 ├── README.md                    
 ```
 
-## Environment
+## 📦 Environment
 We recommend using PyTorch = 2.6.0 with CUDA 12.4. 
 Additionally, you need to install the following packages:
 ```
@@ -91,7 +91,7 @@ bash run_exps.sh
 ```
 
 
-## Experiment Results
+## 📊 Experiment Results
 
 
 ### Llama2-7b
