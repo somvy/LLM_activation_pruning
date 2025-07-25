@@ -1,28 +1,92 @@
 # LLM_activation_pruning
-Code for pruning of input activations to speed up of LLMs
+This repository implements activation-level pruning for speeding up inference and fine-tuning in large language models (LLMs) such as LLaMA-2. The pruning is applied to the input activations of linear layers using structured and unstructured methods, with support for learnable transformations.
+
+# 🚀 Quickstart
+
+## 🧠 Project Structure
+
+```
+LLM_activation_pruning/
+├── act_prune/
+│   ├── main.py                  # Entry point
+│   ├── act_prune_runner.py      # Runner logic
+│   ├── base_runner.py           # Abstract runner with model/data loading
+│   ├── configs/config.yaml      # Config file
+│   ├── run_exps.sh              # Batch experiment runner
+│   ├── modelling/               # Custom blocks and layers
+│   ├── utils/                   # Data and model helpers
+├── notebooks/                   
+├── README.md                    
+```
 
 ## Environment
-To set up the environment, use the Docker container for PyTorch 2.6.0 with CUDA 12.4.
+We recommend using PyTorch = 2.6.0 with CUDA 12.4. 
 Additionally, you need to install the following packages:
 ```
 pip install transformers==4.51.3
 pip install lm_eval==0.4.9
+pip install yq
 ```
 Install any other required packages as needed.
 
-## Parameters
-All parameters for the experiments are contained in the configuration file located at
-`./act_prune/config/config.yaml`
+## ⚙️ Parameters
+All experiment settings are defined in `act_prune/configs/config.yaml`. Here's a breakdown:
+
+```yaml
+env:
+  SEED: 42
+  CUDA_DEVICE_ORDER: PCI_BUS_ID
+  OMP_NUM_THREADS: 4
+
+paths:
+  data_dir: data/
+  log_dir: artifacts/logs/
+  checkpoint_dir: artifacts/checkpoints/
+  results_dir: artifacts/results/
+
+model:
+  path: meta-llama/Llama-2-7b
+  seqlen: 2048
+
+benchmarks:
+  ppl_wikitext2:
+    run_ppl: true
+    batch_size: 8
+  harness:
+    run_lm_eval: true
+    tasks: [boolq, winogrande, piqa, arc_easy]
+    num_fewshot: 0
+    batch_size: 1024
+    apply_chat_template: false
+
+pruning:
+  sparsity_type: semi-structured_act_magnitude
+  transformation_type: learnable
+  sparsity_ratio: 0.2
+  additional_transformation: scaling
+  prune_n: 8
+  prune_m: 16
+  module: layers
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+```
 
 ## Experiments
 To conduct an experiment, simply run the code from the directory `./act_prune`:
 
-```
+```python
 python main.py
 ```
 
 To run a bunch of experiments, use the run_exps.sh script: (install yq if not)
-```
+
+```bash
 bash run_exps.sh
 ```
 
