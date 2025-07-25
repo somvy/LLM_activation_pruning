@@ -15,7 +15,7 @@ model:
     # path: NousResearch/Llama-2-7b-chat-hf
     # path: Qwen/Qwen2.5-7B-Instruct
     # path: google/gemma-3-4b-it
-    path: /workspace/smirnov/models/llama-2-7b-hf
+    path: meta-llama/Llama-2-7b
     seqlen: 2048
 benchmarks:
     ppl_wikitext2:
@@ -26,17 +26,16 @@ benchmarks:
         tasks:
             [
                 "boolq",
-                # "winogrande",
-                # "piqa",
-                # "arc_easy"
+                "winogrande",
+                "piqa",
+                "arc_easy"
             ]
         num_fewshot: 0
         batch_size: 1024
         apply_chat_template: False # for instructive models run with True and False
 pruning:
-    sparsity_type: semi-structured_act_magnitude #semi-structured_act_magnitude
-    # sparsity_type: unstructured_act_magnitude
-    # sparsity_type: unstructured_weight_magnitude
+    sparsity_type: semi-structured_act_magnitude # unstructured_act_magnitude, unstructured_weight_magnitude
+    transformation_type: learnable # none
     sparsity_ratio: 0.2 # for unstructured pruning
     additional_transformation: "scaling"
     prune_n: 8

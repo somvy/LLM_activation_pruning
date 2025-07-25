@@ -58,6 +58,7 @@ class ActPruneRunner(BaseRunner):
         module_name_dict = {name: module for name, module in root_module.named_modules()}
 
         sparsity_type = self.config["pruning"]["sparsity_type"]
+        transformation_type = self.config["pruning"]["transformation_type"]
         sparsity_ratio = self.config["pruning"].get("sparsity_ratio", None)
         prune_n = self.config["pruning"].get("prune_n", None)
         prune_m = self.config["pruning"].get("prune_m", None)
@@ -75,6 +76,7 @@ class ActPruneRunner(BaseRunner):
                 if name[(ind+1):] in target_layers:
                     kvargs = dict(
                         sparsity_type=sparsity_type,
+                        transformation_type=transformation_type,
                         sparsity_ratio=sparsity_ratio,
                         prune_n=prune_n,
                         prune_m=prune_m,
